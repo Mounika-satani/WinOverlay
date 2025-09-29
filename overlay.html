@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Overlay</title>
+  <!-- Link external CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating controls -->
+  <div class="floating-buttons panel" style="padding:4px;">
+    <button id="gearBtn" class="gear-btn">⚙️ Settings</button>
+    <button id="stopBtn" class="stop-btn">⏹ Stop</button>
+  </div>
+
+  <!-- CONFIG PANEL -->
+  <div class="panel" id="configPanel">
+    <label>AssemblyAI API Key:
+        <a href="https://www.assemblyai.com/dashboard/api-keys" target="_blank" title="Get your AssemblyAI API key">
+      ℹ️
+    </a>
+      <input id="assemblyKey" type="password" placeholder="Enter AssemblyAI API Key">
+    </label>
+    <label>Gemini API Key:
+         <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your Gemini API key">
+      ℹ️
+    </a>
+      <input id="geminiKey" type="password" placeholder="Enter Gemini API Key">
+    </label>
+    <label>Gemini Model:
+      <select id="geminiModel">
+        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+        <option value="gemini-pro">gemini-pro</option>
+      </select>
+    </label>
+    <button id="startBtn">▶️ Start</button>
+  </div>
+
+  <!-- CAPTIONS + AI OUTPUT -->
+  <div id="caption" class="panel">🎤 Waiting for captions...</div>
+  <div id="aiResponse" class="panel">🤖 Waiting for AI...</div>
+  <div id="status" class="panel status">Status: idle</div>
+
+  <!-- JS -->
+  <script src="renderer.js"></script>
+</body>
+</html>

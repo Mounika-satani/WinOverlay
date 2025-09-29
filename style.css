@@ -1,0 +1,79 @@
+body {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  font-family: sans-serif;
+  -webkit-app-region: drag;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 8px;
+  gap: 8px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.panel {
+  -webkit-app-region: no-drag;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.35);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+#caption {
+  font-size: 16px;
+  line-height: 1.2;
+  max-height: 6.4em;
+  overflow-y: auto;
+}
+
+#aiResponse {
+  font-size: 14px;
+  color: #e0f0ff;
+  max-height: 6.4em;
+  overflow-y: auto;
+}
+
+.status {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+input, button, select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+button {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.floating-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gear-btn, .stop-btn {
+  width: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.hidden {
+  display: none;
+}
