@@ -3,46 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <title>Overlay</title>
-  <!-- Link external CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Floating controls -->
-  <div class="floating-buttons panel" style="padding:4px;">
-    <button id="gearBtn" class="gear-btn">⚙️ Settings</button>
-    <button id="stopBtn" class="stop-btn">⏹ Stop</button>
+  <!-- Close button -->
+  <button id="closeBtn" class="close-btn" title="Close Application">
+    <svg class="close-icon" viewBox="0 0 24 24" width="16" height="16">
+      <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </svg>
+  </button>
+
+  <!-- Floating controls (only Stop now) -->
+  <div class="floating-buttons panel">
+    <button id="stopBtn" class="stop-btn" title="Stop Transcription">⏹ Stop</button>
+  </div>
+  
+
+  <!-- Scrollable content area with tabs -->
+  <div class="scroll-container">
+    <!-- Tabs Bar -->
+    <div class="tabs">
+      <button id="tabSettings" class="tab active" title="Setup (API keys and options)">Setup</button>
+      <button id="tabLive" class="tab" title="Live view">Live</button>
+      <button id="tabCode" class="tab" title="Code view (pre)">Code</button>
+      <button id="tabHistory" class="tab" title="Conversation history">History</button>
+      <div class="status-chip" title="Connection and mode">
+        <span id="connChip" class="chip conn off">Disconnected</span>
+      </div>
+    </div>
+
+    <!-- LIVE PANEL -->
+    <div id="panel-live" class="tab-panel">
+      <div id="currentInteraction">
+        <div id="caption" class="panel caption-panel">🎤 Waiting for captions...</div>
+        <div id="aiResponse" class="panel ai-panel">🤖 Waiting for AI response...</div>
+      </div>
+      <div id="status" class="panel status">Status: idle</div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div id="panel-history" class="tab-panel">
+      <div id="conversation" class="conversation-container">
+        <div class="conversation-header">
+          <span>Interview Conversation</span>
+        </div>
+        <div id="conversationHistory" class="conversation-history"></div>
+      </div>
+    </div>
+
+    <!-- CODE PANEL -->
+    <div id="panel-code" class="tab-panel">
+      <div class="panel" style="padding:0;">
+        <pre id="codeAnswer" style="margin:0; padding:10px; max-height:40vh; overflow:auto; background: rgba(0,0,0,0.25);
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+        ">🤖 Code view will appear here…</pre>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="panel-settings" class="tab-panel active">
+      <div class="panel" id="configPanel">
+        <div class="form-group">
+          <div class="label-with-info">
+            <span class="label-text">AssemblyAI API Key:</span>
+            <a href="https://www.assemblyai.com/dashboard/api-keys" target="_blank" title="Get your AssemblyAI API key" class="info-icon">ℹ️</a>
+          </div>
+          <input id="assemblyKey" type="password" placeholder="Enter AssemblyAI API Key">
+        </div>
+        <div class="form-group">
+          <div class="label-with-info">
+            <span class="label-text">Gemini API Key:</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your Gemini API key" class="info-icon">ℹ️</a>
+          </div>
+          <input id="geminiKey" type="password" placeholder="Enter Gemini API Key">
+        </div>
+        <label>Gemini Model:
+          <select id="geminiModel">
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            <option value="gemini-pro">gemini-pro</option>
+          </select>
+        </label>
+        <button id="startBtn">▶️ Start</button>
+      </div>
+    </div>
+
+  </div> <!-- End of scroll-container -->
+
+  <!-- Fixed input panel at bottom -->
+  <div class="input-panel">
+    <input id="askInput" type="text" placeholder="Ask Gemini anything..." class="ask-input">
+    <button id="askBtn" class="ask-button">Ask</button>
   </div>
 
-  <!-- CONFIG PANEL -->
-  <div class="panel" id="configPanel">
-    <label>AssemblyAI API Key:
-        <a href="https://www.assemblyai.com/dashboard/api-keys" target="_blank" title="Get your AssemblyAI API key">
-      ℹ️
-    </a>
-      <input id="assemblyKey" type="password" placeholder="Enter AssemblyAI API Key">
-    </label>
-    <label>Gemini API Key:
-         <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your Gemini API key">
-      ℹ️
-    </a>
-      <input id="geminiKey" type="password" placeholder="Enter Gemini API Key">
-    </label>
-    <label>Gemini Model:
-      <select id="geminiModel">
-        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-        <option value="gemini-pro">gemini-pro</option>
-      </select>
-    </label>
-    <button id="startBtn">▶️ Start</button>
-  </div>
-
-  <!-- CAPTIONS + AI OUTPUT -->
-  <div id="caption" class="panel">🎤 Waiting for captions...</div>
-  <div id="aiResponse" class="panel">🤖 Waiting for AI...</div>
-  <div id="status" class="panel status">Status: idle</div>
-
-  <!-- JS -->
   <script src="renderer.js"></script>
 </body>
 </html>

@@ -1,37 +1,3 @@
-// // overlay.js
-// const { BrowserWindow } = require("electron");
-
-// function createOverlay() {
-//   const overlayWindow = new BrowserWindow({
-//     width: 600,
-//     height: 340,
-//     alwaysOnTop: true,
-//     transparent: true,
-//     frame: false,
-//     resizable: true,
-//     movable: true,
-//     webPreferences: {
-//       nodeIntegration: true,
-//       contextIsolation: false,
-//     },
-//   });
-
-//   overlayWindow.loadFile("overlay.html");
-
-//   // Exclude from screen share (optional)
-//   try {
-//     const affinity = require("./native/build/Release/display_affinity.node");
-//     const hwnd = overlayWindow.getNativeWindowHandle().readBigInt64LE();
-//     affinity.exclude(Number(hwnd));
-//   } catch (e) {
-//     console.warn("⚠️ Display affinity not loaded, overlay may show in screen share.");
-//   }
-
-//   return overlayWindow;
-// }
-
-// module.exports = { createOverlay };
-
 const { BrowserWindow, app, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -39,8 +5,8 @@ const fs = require("fs");
 function createOverlay() {
   // Create the overlay window
   const overlayWindow = new BrowserWindow({
-    width: 600,
-    height: 340,
+    width: 750,
+    height: 540,
     alwaysOnTop: true,
     transparent: true,
     frame: false,
