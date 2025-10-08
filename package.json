@@ -2,7 +2,7 @@
   "name": "app",
   "version": "1.0.0",
   "description": "My Electron App with native module",
-  "main": "main.js",
+  "main": "src/main/main.js",
   "author": "mounika",
   "license": "ISC",
   "scripts": {

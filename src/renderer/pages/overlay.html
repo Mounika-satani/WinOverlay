@@ -3,19 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <title>Overlay</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../styles/style.css">
 </head>
 <body>
-  <!-- Close button -->
+  <!-- Top drag gutter -->
+  <div class="drag-gutter top" title="Drag window"></div>
+  <!-- Minimize and Close buttons -->
+  <button id="minBtn" class="min-btn" title="Minimize Window" aria-label="Minimize">
+    <svg class="min-icon" viewBox="0 0 24 24" width="16" height="16">
+      <path fill="currentColor" d="M19 13H5v-2h14v2z"/>
+    </svg>
+  </button>
   <button id="closeBtn" class="close-btn" title="Close Application">
     <svg class="close-icon" viewBox="0 0 24 24" width="16" height="16">
       <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
     </svg>
   </button>
 
-  <!-- Floating controls (only Stop now) -->
-  <div class="floating-buttons panel">
-    <button id="stopBtn" class="stop-btn" title="Stop Transcription">⏹ Stop</button>
+  <!-- Floating Action Button (Stop) -->
+  <div class="fab-container">
+    <button id="stopBtn" class="fab-stop" title="Stop Transcription" aria-label="Stop">⏹</button>
   </div>
   
 
@@ -54,7 +61,7 @@
     <!-- CODE PANEL -->
     <div id="panel-code" class="tab-panel">
       <div class="panel" style="padding:0;">
-        <pre id="codeAnswer" style="margin:0; padding:10px; max-height:40vh; overflow:auto; background: rgba(0,0,0,0.25);
+        <pre id="codeAnswer" style="margin:0; padding:10px; background: rgba(0,0,0,0.25);
           font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
         ">🤖 Code view will appear here…</pre>
       </div>
@@ -68,14 +75,28 @@
             <span class="label-text">AssemblyAI API Key:</span>
             <a href="https://www.assemblyai.com/dashboard/api-keys" target="_blank" title="Get your AssemblyAI API key" class="info-icon">ℹ️</a>
           </div>
-          <input id="assemblyKey" type="password" placeholder="Enter AssemblyAI API Key">
+          <div class="input-with-eye">
+            <input id="assemblyKey" type="password" placeholder="Enter AssemblyAI API Key" autocomplete="off">
+            <button type="button" class="eye-btn" data-target="assemblyKey" title="Show API key" aria-label="Show API key">
+              <svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path fill="currentColor" d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 7.5 2.5 2.5 0 0 0 12 14.5z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <div class="label-with-info">
             <span class="label-text">Gemini API Key:</span>
             <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your Gemini API key" class="info-icon">ℹ️</a>
           </div>
-          <input id="geminiKey" type="password" placeholder="Enter Gemini API Key">
+          <div class="input-with-eye">
+            <input id="geminiKey" type="password" placeholder="Enter Gemini API Key" autocomplete="off">
+            <button type="button" class="eye-btn" data-target="geminiKey" title="Show API key" aria-label="Show API key">
+              <svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path fill="currentColor" d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 7.5 2.5 2.5 0 0 0 12 14.5z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <label>Gemini Model:
           <select id="geminiModel">
@@ -96,6 +117,6 @@
     <button id="askBtn" class="ask-button">Ask</button>
   </div>
 
-  <script src="renderer.js"></script>
+  <script src="../renderer.js"></script>
 </body>
 </html>

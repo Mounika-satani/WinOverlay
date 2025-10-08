@@ -1,26 +1,53 @@
-// // renderer.js
-// const { ipcRenderer } = require("electron");
+// src/renderer/renderer.js
+const { ipcRenderer } = require("electron");
 
-// const captionEl = document.getElementById("caption");
-// const aiEl = document.getElementById("aiResponse");
-// const statusEl = document.getElementById("status");
-// const configPanel = document.getElementById("configPanel");
-// const gearBtn = document.getElementById("gearBtn");
-// const stopBtn = document.getElementById("stopBtn");
-// const startBtn = document.getElementById("startBtn");
+// No-op function to replace debug logging
+function debugLog() {}
 
-// ipcRenderer.on("transcription", (event, text) => {
-//   captionEl.innerText = text;
-//   statusEl.innerText = "Status: listening...";
-// });
+// DOM Elements
+const captionEl = document.getElementById("caption");
+const aiEl = document.getElementById("aiResponse");
+const statusEl = document.getElementById("status");
+const configPanel = document.getElementById("configPanel");
+const gearBtn = document.getElementById("gearBtn");
+const stopBtn = document.getElementById("stopBtn");
+const startBtn = document.getElementById("startBtn");
+const conversationHistoryEl = document.getElementById("conversationHistory");
+const askInput = document.getElementById("askInput");
+const askBtn = document.getElementById("askBtn");
+const codeAnswer = document.getElementById('codeAnswer');
+
+// State
+let currentQuestion = '';
+let currentAnswer = '';
+let isProcessing = false;
+let isStarted = false;
+let lastAskedIsCode = false;
 
 // Adjust bottom padding to avoid overlap with fixed input panel
 function adjustScrollPadding() {
   const scrollContainer = document.querySelector('.scroll-container');
   const inputPanel = document.querySelector('.input-panel');
+  const tabs = document.querySelector('.tabs');
+  const codeAnswerEl = document.getElementById('codeAnswer');
   if (!scrollContainer || !inputPanel) return;
-  const pad = inputPanel.offsetHeight + 24; // add a little extra spacing
-  scrollContainer.style.paddingBottom = pad + 'px';
+
+  // Compute dynamic heights
+  const inputH = inputPanel.offsetHeight || 0;
+  const tabsH = tabs ? tabs.offsetHeight : 48;
+
+  // Set CSS variables so CSS can layout correctly
+  scrollContainer.style.setProperty('--input-panel-h', inputH + 'px');
+  scrollContainer.style.setProperty('--tabs-h', tabsH + 'px');
+
+  // Also cap the code answer area so it ends above the input panel
+  if (codeAnswerEl) {
+    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const available = Math.max(150, viewportH - inputH - tabsH - 20);
+    codeAnswerEl.style.maxHeight = available + 'px';
+    codeAnswerEl.style.overflowY = 'auto';
+    codeAnswerEl.style.overflowX = 'hidden';
+  }
 }
 
 window.addEventListener('DOMContentLoaded', adjustScrollPadding);
@@ -53,90 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabHistory) tabHistory.addEventListener('click', () => setActiveTab('history'));
   if (tabSettings) tabSettings.addEventListener('click', () => setActiveTab('settings'));
 });
-
-// ipcRenderer.on("connection-status", (event, status) => {
-//   statusEl.innerText = status === "connected"
-//     ? "Status: connected, listening..."
-//     : "Status: disconnected";
-// });
-
-// ipcRenderer.on("error", (event, err) => {
-//   statusEl.innerText = "⚠️ " + err;
-// });
-
-// ipcRenderer.on("gemini-response", (event, text) => {
-//   aiEl.innerText = text;
-//   statusEl.innerText = "Status: AI updated";
-// });
-
-// // Start transcription
-// startBtn.addEventListener("click", () => {
-//   const assemblyKey = document.getElementById("assemblyKey").value.trim();
-//   const geminiKey = document.getElementById("geminiKey").value.trim();
-//   const geminiModel = document.getElementById("geminiModel").value.trim();
-
-//   if (!assemblyKey || !geminiKey) {
-//     statusEl.innerText = "Please enter both API keys.";
-//     return;
-//   }
-
-//   configPanel.classList.add("hidden");
-
-//   ipcRenderer.invoke("start-transcription", {
-//     apiKey: assemblyKey,
-//     geminiKey,
-//     geminiModel,
-//     deviceName: "CABLE Output (VB-Audio Virtual Cable)",
-//   }).then(res => {
-//     if (!res.success) {
-//       statusEl.innerText = "Error starting transcription: " + res.error;
-//       configPanel.classList.remove("hidden");
-//     }
-//   });
-// });
-
-// // Stop transcription
-// stopBtn.addEventListener("click", () => {
-//   ipcRenderer.invoke("stop-transcription");
-const { ipcRenderer } = require("electron");
-
-// No-op function to replace debug logging
-function debugLog() {}
-
-// DOM Elements
-const captionEl = document.getElementById("caption");
-const aiEl = document.getElementById("aiResponse");
-const statusEl = document.getElementById("status");
-const configPanel = document.getElementById("configPanel");
-const gearBtn = document.getElementById("gearBtn");
-const stopBtn = document.getElementById("stopBtn");
-const startBtn = document.getElementById("startBtn");
-const conversationHistoryEl = document.getElementById("conversationHistory");
-const askInput = document.getElementById("askInput");
-const askBtn = document.getElementById("askBtn");
-const codeAnswer = document.getElementById('codeAnswer');
-
-// State
-let currentQuestion = '';
-let currentAnswer = '';
-let isProcessing = false;
-let isStarted = false;
-let lastAskedIsCode = false;
-
-// Detect if a text likely requests code output
-function isCodeIntent(text) {
-  if (!text) return false;
-  const t = text.toLowerCase();
-  // Verbs indicating a request to produce code + code nouns
-  const verbNoun = /(write|show|give|create|generate|build|make|provide|implement|produce|print|example|sample)\b[\s\S]{0,40}\b(code|snippet|program|script|function|class|module|algorithm)/i;
-  // Phrases like "program to ...", "script to ..."
-  const programTo = /(program|script)\s+to\b/i;
-  // Language + noun or verb, e.g. "python function", "javascript code"
-  const lang = /(python|py|javascript|js|node|typescript|java|c\+\+|c#|c|go|rust|ruby|php)/i;
-  const langCombo = new RegExp(`${lang.source}[^\n]{0,30}(code|snippet|program|script|function|class)`, 'i');
-  const langVerb = new RegExp(`(write|create|generate|build|make|implement)[^\n]{0,30}${lang.source}`, 'i');
-  return verbNoun.test(t) || programTo.test(t) || langCombo.test(t) || langVerb.test(t);
-}
 
 ipcRenderer.on("transcription", (event, text) => {
   if (!text.trim()) return;
@@ -235,6 +178,18 @@ ipcRenderer.on("qa-response", (event, text) => {
     lastAskedIsCode = false;
   }
 });
+
+// Detect if a text likely requests code output
+function isCodeIntent(text) {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  const verbNoun = /(write|show|give|create|generate|build|make|provide|implement|produce|print|example|sample)\b[\s\S]{0,40}\b(code|snippet|program|script|function|class|module|algorithm)/i;
+  const programTo = /(program|script)\s+to\b/i;
+  const lang = /(python|py|javascript|js|node|typescript|java|c\+\+|c#|c|go|rust|ruby|php)/i;
+  const langCombo = new RegExp(`${lang.source}[^\n]{0,30}(code|snippet|program|script|function|class)`, 'i');
+  const langVerb = new RegExp(`(write|create|generate|build|make|implement)[^\n]{0,30}${lang.source}`, 'i');
+  return verbNoun.test(t) || programTo.test(t) || langCombo.test(t) || langVerb.test(t);
+}
 
 // Helper: extract fenced code block content
 function extractFencedCode(text) {
@@ -370,7 +325,45 @@ function smoothScrollTo(element, targetPosition, duration = 200) {
   requestAnimationFrame(animation);
 }
 
-// (Removed custom scroll buttons; using native scroll only)
+// Toggle API key visibility for inputs with eye buttons
+function setupEyeToggles() {
+  const buttons = document.querySelectorAll('.eye-btn');
+
+  const eyeSVG = (
+    '<svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '  <path fill="currentColor" d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5A2.5 2.5 0 1 0 12 7.5 2.5 2.5 0 0 0 12 14.5z"/>' +
+    '</svg>'
+  );
+  const eyeOffSVG = (
+    '<svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+    '  <path fill="currentColor" d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>' +
+    '  <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2"/>' +
+    '</svg>'
+  );
+
+  buttons.forEach(btn => {
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const setVisual = () => {
+      const hidden = input.type === 'password';
+      btn.innerHTML = hidden ? eyeSVG : eyeOffSVG;
+      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+      btn.title = hidden ? 'Show API key' : 'Hide API key';
+      btn.setAttribute('aria-label', hidden ? 'Show API key' : 'Hide API key');
+    };
+
+    // Initialize state on load
+    setVisual();
+
+    btn.addEventListener('click', () => {
+      const willShow = input.type === 'password';
+      input.type = willShow ? 'text' : 'password';
+      setVisual();
+    });
+  });
+}
 
 // Add message to conversation history
 function addToHistory(role, text) {
@@ -422,13 +415,19 @@ function handleAskInput() {
   }
 }
 
-// (Removed duplicate simulated sendQuestion/handleAskInput)
-
 // Close button functionality
 const closeBtn = document.getElementById('closeBtn');
 if (closeBtn) {
   closeBtn.addEventListener('click', () => {
     ipcRenderer.send('close-window');
+  });
+}
+
+// Minimize button functionality
+const minBtn = document.getElementById('minBtn');
+if (minBtn) {
+  minBtn.addEventListener('click', () => {
+    ipcRenderer.send('minimize-window');
   });
 }
 
@@ -443,16 +442,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize ask input functionality
   handleAskInput();
   
-  // (Removed re-initialization of scroll buttons)
-  
   // Add test messages
   const historyEl = document.getElementById('conversationHistory');
   if (historyEl && historyEl.children.length === 0) {
     testScrollFunctionality();
   }
   
-  // Initialize scroll buttons after a small delay
-  // Removed undefined addScrollButtons() call
+  // Initialize API key eye toggles
+  setupEyeToggles();
 });
 
 // Handle Enter key in ask input
@@ -507,3 +504,4 @@ askBtn.addEventListener("click", () => {
     isProcessing = false;
   });
 });
+// src/renderer/renderer.js

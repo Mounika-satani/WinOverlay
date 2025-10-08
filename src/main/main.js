@@ -1,4 +1,4 @@
-// main.js
+// src/main/main.js
 const { app, ipcMain, BrowserWindow } = require("electron");
 const { createOverlay } = require("./overlay");
 const transcription = require("./transcription");
@@ -30,6 +30,13 @@ ipcMain.on('close-window', () => {
   }
 });
 
+// Handle window minimize request
+ipcMain.on('minimize-window', () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.minimize();
+  }
+});
+
 // Lifecycle
 app.whenReady().then(() => {
   overlayWindow = createOverlay();
@@ -57,4 +64,3 @@ ipcMain.handle("ask-gemini", async (event, question) => {
     return { success: false, error: err.message };
   }
 });
-

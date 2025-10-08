@@ -1,16 +1,23 @@
-const { BrowserWindow, app, dialog } = require("electron");
+const { BrowserWindow, app } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 function createOverlay() {
-  // Create the overlay window
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, "build", "icon.ico")
+    : path.join(__dirname, "..", "..", "build", "icon.ico");
+
   const overlayWindow = new BrowserWindow({
     width: 750,
     height: 540,
+    icon: iconPath,
+    skipTaskbar: false,
     alwaysOnTop: true,
     transparent: true,
     frame: false,
     resizable: true,
+    minWidth: 600,
+    minHeight: 400,
     movable: true,
     webPreferences: {
       nodeIntegration: true,
@@ -18,13 +25,29 @@ function createOverlay() {
     },
   });
 
-  overlayWindow.loadFile("overlay.html");
+  // Load the overlay HTML from src/renderer/pages
+  const htmlPath = path.join(__dirname, "..", "renderer", "pages", "overlay.html");
+  overlayWindow.loadFile(htmlPath);
+
+  // Constrain movement to horizontal only by locking the initial Y
+  const initialBounds = overlayWindow.getBounds();
+  const fixedY = initialBounds.y;
+  overlayWindow.on('will-move', (event, newBounds) => {
+    if (newBounds && typeof newBounds.y === 'number' && newBounds.y !== fixedY) {
+      event.preventDefault();
+      overlayWindow.setBounds({
+        x: newBounds.x,
+        y: fixedY,
+        width: newBounds.width,
+        height: newBounds.height,
+      });
+    }
+  });
 
   try {
     let nativeModulePath;
 
     if (app.isPackaged) {
-      // Path for packaged build
       nativeModulePath = path.join(
         process.resourcesPath,
         "app.asar.unpacked",
@@ -34,9 +57,10 @@ function createOverlay() {
         "display_affinity.node"
       );
     } else {
-      // Path for development
       nativeModulePath = path.join(
         __dirname,
+        "..",
+        "..",
         "native",
         "build",
         "Release",
@@ -44,7 +68,6 @@ function createOverlay() {
       );
     }
 
-    // Load the native module
     const affinity = require(nativeModulePath);
     const hwnd = overlayWindow.getNativeWindowHandle().readBigInt64LE();
     affinity.exclude(Number(hwnd)); // Hide overlay from screen share
@@ -58,6 +81,4 @@ function createOverlay() {
   return overlayWindow;
 }
 
-
 module.exports = { createOverlay };
-

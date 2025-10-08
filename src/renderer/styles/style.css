@@ -15,6 +15,17 @@ body {
   padding: 8px;
 }
 
+/* Top drag gutter */
+.drag-gutter.top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px; /* Thin strip for dragging */
+  -webkit-app-region: drag;
+  z-index: 900; /* below close button (1001) */
+}
+
 /* Allow clicks on interactive elements while the window is otherwise draggable */
 .no-drag { -webkit-app-region: no-drag; }
 button, input, select, textarea, a { -webkit-app-region: no-drag; }
@@ -32,11 +43,12 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 60px 8px 120px 8px; /* Extra bottom padding to clear fixed input panel */
-  margin: 0 -8px 0 -8px; /* Remove negative bottom margin to avoid overlap */
+  padding: 60px 8px var(--input-panel-h, 120px) 8px; /* bottom padding matches input panel */
+  margin: 0 24px; /* Leave 24px draggable gutters on left/right */
   scroll-behavior: smooth;
   position: relative;
   z-index: 1;
+  -webkit-app-region: no-drag; /* allow scrolling and clicks */
 }
 
 /* Custom scrollbar for the entire overlay */
@@ -59,6 +71,7 @@ html {
 }
 
 .panel {
+  -webkit-app-region: no-drag; /* allow interacting with content */
   padding: 8px 12px;
   border-radius: 8px;
   background: rgba(0,0,0,0.35);
@@ -74,6 +87,26 @@ html {
   padding: 12px 16px;
   width: 100%;
   box-sizing: border-box;
+}
+
+#panel-code .panel {
+  width: 100%;
+  min-height: calc(100vh - 140px); /* fill most of viewport */
+  position: sticky;          /* keep the code panel fixed within scroll */
+  top: var(--tabs-h, 48px);  /* sit just below the sticky tabs */
+  z-index: 1;
+  margin-bottom: var(--input-panel-h, 120px); /* avoid overlapping fixed input panel */
+}
+
+#codeAnswer {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;       /* wrap long lines */
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 #configPanel .api-fields {
@@ -150,6 +183,52 @@ select {
   color: white;
   font-size: 13px;
   box-sizing: border-box;
+}
+
+/* Wrap inputs that include an inline eye toggle */
+.input-with-eye {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-eye > input[type="password"],
+.input-with-eye > input[type="text"] {
+  padding-right: 36px; /* space for eye button */
+}
+
+.eye-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: white;
+  cursor: default;
+  -webkit-app-region: no-drag;
+  padding: 0;
+}
+
+.eye-btn:hover {
+  background: transparent;
+}
+
+.eye-btn:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.eye-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 input[type="text"]:focus,
@@ -490,6 +569,44 @@ button:hover {
   margin-left: 1px;
 }
 
+/* Minimize button: placed to the left of the close button */
+.min-btn {
+  position: fixed;
+  top: 15px;
+  right: 50px; /* 15px (padding) + 28px (close width) + ~7px gap */
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(33, 150, 243, 0.9);
+  border-radius: 4px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  padding: 0;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.min-btn:hover {
+  background: #1976d2;
+  transform: scale(1.1);
+}
+
+.min-btn:active {
+  transform: scale(0.95);
+}
+
+.min-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .floating-buttons {
   position: fixed;
   top: 10px;
@@ -538,6 +655,7 @@ button:hover {
 
 /* Tabs Bar */
 .tabs {
+  -webkit-app-region: no-drag; /* allow clicking tabs */
   display: flex;
   gap: 6px;
   padding: 6px 6px 0 6px;
@@ -613,3 +731,4 @@ button:hover {
 }
 
 .status-chip .sep { opacity: 0.6; }
+/* Copied from original style.css at project root */
