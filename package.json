@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "My Electron App with native module",
   "main": "src/main/main.js",
-  "author": "mounika",
+  "author": "weiteredge",
   "license": "ISC",
   "scripts": {
     "start": "electron .",
