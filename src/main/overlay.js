@@ -8,7 +8,7 @@ function createOverlay() {
     : path.join(__dirname, "..", "..", "build", "icon.ico");
 
   const overlayWindow = new BrowserWindow({
-    width: 750,
+    width: 650,
     height: 540,
     icon: iconPath,
     skipTaskbar: false,

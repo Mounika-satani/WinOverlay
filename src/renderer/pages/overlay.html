@@ -106,6 +106,40 @@
           </select>
         </label>
         <button id="startBtn">▶️ Start</button>
+
+        <hr style="margin:16px 0; opacity:0.5;" />
+        <div class="form-group">
+          <div class="label-with-info">
+            <span class="label-text">VB-CABLE Setup:</span>
+            <a href="https://vb-audio.com/Cable/" target="_blank" title="VB-Audio Cable website" class="info-icon">ℹ️</a>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button id="vbInstallBtn" type="button" title="Open VB-CABLE download page">Install / Verify</button>
+            <button id="vbApplyBtn" type="button" title="Apply routing (opens Control Panel)">Apply Routing</button>
+            <span id="vbStatus" style="margin-left:auto; font-size:12px; opacity:0.8;">VB-CABLE: Unknown</span>
+          </div>
+          <div style="font-size:12px; opacity:0.9; margin-top:8px; line-height:1.4;">
+            <div style="margin-bottom:6px;"><strong>Install VB-CABLE</strong> (if not installed):</div>
+            <ol style="margin:0 0 8px 18px; padding:0;">
+              <li>Scroll to <em>VB-CABLE Driver (Donationware)</em> and click <strong>Download</strong>.</li>
+              <li>Extract ZIP: Right-click the zip → <strong>Extract All…</strong></li>
+              <li>Right-click <strong>VBCABLE_Setup_x64.exe</strong> → <strong>Run as Administrator</strong>.</li>
+              <li>Click <strong>Install Driver</strong>, wait for completion, then <strong>Restart PC</strong>.</li>
+            </ol>
+            <div style="margin:8px 0 6px 0;"><strong>After install, configure routing</strong> (Apply Routing can help open the dialogs):</div>
+            <ol style="margin:0 0 0 18px; padding:0;">
+              <li><strong>Playback (Default)</strong>: Set <em>CABLE Input (VB-Audio Virtual Cable)</em> as Default device.</li>
+              <li><strong>Recording (Default)</strong>: Set your <em>Microphone Array (physical mic)</em> as Default device.</li>
+              <li><strong>Recording > Properties > Listen</strong>:
+                <ul style="margin:4px 0 0 16px;">
+                  <li>Uncheck <em>"Listen to this device"</em>.</li>
+                  <li>Set <em>Playback through this device</em> to <em>CABLE Input</em>. Click Apply, then OK.</li>
+                </ul>
+              </li>
+              <li><strong>Do NOT</strong> set <em>CABLE Output</em> as a default device.</li>
+            </ol>
+          </div>
+        </div>
       </div>
     </div>
 

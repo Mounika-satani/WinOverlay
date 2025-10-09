@@ -1,19 +1,67 @@
 // src/main/main.js
-const { app, ipcMain, BrowserWindow } = require("electron");
+const { app, ipcMain, BrowserWindow, shell } = require("electron");
 const { createOverlay } = require("./overlay");
 const transcription = require("./transcription");
+const { exec } = require('child_process');
 
 let overlayWindow;
 
-// Function to check if VB-Cable is installed
+// Function to check if VB-CABLE is installed by querying Windows registry for devices
 function isVBCableInstalled() {
-  // Implementation should be here or imported from another module
-  return false; // Default implementation
+  return new Promise((resolve) => {
+    try {
+      const cmd = 'reg query "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\MMDevices\\Audio" /f "VB-Audio Virtual Cable" /s';
+      exec(cmd, { windowsHide: true }, (err, stdout, stderr) => {
+        if (err) {
+          // Fallback: also try searching for "CABLE Input"/"CABLE Output"
+          const fallback = 'reg query "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\MMDevices\\Audio" /f "CABLE Input" /s';
+          exec(fallback, { windowsHide: true }, (err2, out2) => {
+            if (err2) return resolve(false);
+            const hasCable = /CABLE Input|CABLE Output/i.test(out2 || '');
+            resolve(!!hasCable);
+          });
+          return;
+        }
+        const ok = /VB-Audio Virtual Cable|CABLE Input|CABLE Output/i.test(stdout || '');
+        resolve(!!ok);
+      });
+    } catch (e) {
+      resolve(false);
+    }
+  });
 }
 
-// IPC for checking VB-Cable
+// IPC for checking VB-CABLE
 ipcMain.handle("check-vbcable", async () => {
-  return isVBCableInstalled();
+  return await isVBCableInstalled();
+});
+
+// IPC: open VB-CABLE download page
+ipcMain.handle('open-vbcable-download', async () => {
+  await shell.openExternal('https://vb-audio.com/Cable/');
+  return true;
+});
+
+// IPC: open Sound control panel (Playback tab)
+ipcMain.handle('open-sound-playback', async () => {
+  try {
+    // control.exe mmsys.cpl,,0 opens Playback tab
+    exec('control.exe mmsys.cpl,,0', { windowsHide: true });
+    return true;
+  } catch (e) {
+    return false;
+  }
+});
+
+// IPC: open Sound control panel (Recording tab)
+ipcMain.handle('open-sound-recording', async () => {
+  try {
+    // control.exe mmsys.cpl,,1 opens Recording tab
+    exec('control.exe mmsys.cpl,,1', { windowsHide: true });
+    return true;
+  } catch (e) {
+    return false;
+  }
 });
 
 // IPC handlers

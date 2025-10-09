@@ -16,6 +16,11 @@ const conversationHistoryEl = document.getElementById("conversationHistory");
 const askInput = document.getElementById("askInput");
 const askBtn = document.getElementById("askBtn");
 const codeAnswer = document.getElementById('codeAnswer');
+// VB-CABLE elements
+const vbToggle = document.getElementById('vbToggle'); // optional (no longer present in UI)
+const vbInstallBtn = document.getElementById('vbInstallBtn');
+const vbApplyBtn = document.getElementById('vbApplyBtn');
+const vbStatus = document.getElementById('vbStatus');
 
 // State
 let currentQuestion = '';
@@ -450,6 +455,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize API key eye toggles
   setupEyeToggles();
+
+  // Check VB-CABLE installation status
+  initVbCableSection();
 });
 
 // Handle Enter key in ask input
@@ -504,4 +512,44 @@ askBtn.addEventListener("click", () => {
     isProcessing = false;
   });
 });
+// VB-CABLE helpers
+function setVbStatus(text, ok = null) {
+  if (!vbStatus) return;
+  vbStatus.textContent = text;
+  vbStatus.style.color = ok === true ? '#0f0' : ok === false ? '#f66' : '';
+}
+
+async function initVbCableSection() {
+  try {
+    const installed = await ipcRenderer.invoke('check-vbcable');
+    setVbStatus(installed ? 'VB-CABLE: Installed' : 'VB-CABLE: Not installed', installed);
+    if (vbToggle) vbToggle.checked = installed; // default on if found
+  } catch (e) {
+    setVbStatus('VB-CABLE: Unknown');
+  }
+
+  if (vbInstallBtn) {
+    vbInstallBtn.addEventListener('click', async () => {
+      await ipcRenderer.invoke('open-vbcable-download');
+      setActiveTab('settings');
+    });
+  }
+
+  if (vbApplyBtn) {
+    vbApplyBtn.addEventListener('click', async () => {
+      // Guide user: open Playback then Recording tabs
+      statusEl.innerText = 'Opening Sound settings: set CABLE Input as Default on Playback tab...';
+      await ipcRenderer.invoke('open-sound-playback');
+      // Small delay to allow window to appear
+      setTimeout(async () => {
+        statusEl.innerText = 'Now set your physical Microphone as Default on Recording tab, then open its Properties > Listen: uncheck "Listen" and set playback to CABLE Input.';
+        await ipcRenderer.invoke('open-sound-recording');
+      }, 1000);
+    });
+  }
+
+  // Removed Open Playback / Open Recording / Revert controls (no longer in UI)
+
+  // No toggle now; guidance is provided via buttons and status messages.
+}
 // src/renderer/renderer.js
