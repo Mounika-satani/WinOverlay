@@ -5,6 +5,113 @@ const { clipboard } = require('electron');
 // No-op function to replace debug logging
 function debugLog() {}
 
+// Remove native tooltips so no text appears on hover during screen share
+function stripTooltips() {
+  try {
+    const strip = (root) => {
+      root.querySelectorAll('[title]').forEach((el) => el.removeAttribute('title'));
+    };
+    strip(document);
+    // Observe future DOM changes and strip any titles added later
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'title' && m.target && m.target.removeAttribute) {
+          m.target.removeAttribute('title');
+        } else if (m.addedNodes && m.addedNodes.length) {
+          m.addedNodes.forEach((n) => {
+            if (n.nodeType === 1) {
+              if (n.hasAttribute && n.hasAttribute('title')) n.removeAttribute('title');
+              if (n.querySelectorAll) {
+                n.querySelectorAll('[title]').forEach((el) => el.removeAttribute('title'));
+              }
+            }
+          });
+        }
+      }
+    });
+    mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['title'] });
+  } catch (_) {
+    // ignore
+  }
+}
+
+// Kick off tooltip stripping immediately
+stripTooltips();
+
+// ---------- Custom Gemini Model Dropdown ----------
+function setupCustomModelDropdown() {
+  if (!geminiModelSelect || !geminiModelBtn || !geminiModelList || !geminiModelLabel) return;
+
+  // Initialize label from current hidden select value
+  const initValue = geminiModelSelect.value || (geminiModelSelect.options[0] && geminiModelSelect.options[0].value) || '';
+  setModelValue(initValue, false);
+
+  // Toggle list visibility
+  geminiModelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = geminiModelList.hasAttribute('hidden') ? false : true;
+    if (isOpen) {
+      closeModelList();
+    } else {
+      openModelList();
+    }
+  });
+
+  // Option click
+  geminiModelList.addEventListener('click', (e) => {
+    const li = e.target.closest('[role="option"]');
+    if (!li) return;
+    const val = li.getAttribute('data-value');
+    setModelValue(val, true);
+    closeModelList();
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!geminiModelList.hasAttribute('hidden')) {
+      const within = e.target === geminiModelBtn || geminiModelBtn.contains(e.target) || geminiModelList.contains(e.target);
+      if (!within) closeModelList();
+    }
+  });
+
+  // Keyboard: Escape to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !geminiModelList.hasAttribute('hidden')) {
+      closeModelList();
+      geminiModelBtn.focus();
+    }
+  });
+
+  function openModelList() {
+    geminiModelList.removeAttribute('hidden');
+    geminiModelBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeModelList() {
+    geminiModelList.setAttribute('hidden', '');
+    geminiModelBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function setModelValue(value, notifyChange) {
+    // Update hidden select value
+    if (geminiModelSelect.value !== value) {
+      geminiModelSelect.value = value;
+      if (notifyChange) {
+        const evt = new Event('change', { bubbles: true });
+        geminiModelSelect.dispatchEvent(evt);
+      }
+    }
+    // Update label text
+    geminiModelLabel.textContent = value;
+    // Update list selection state
+    const items = geminiModelList.querySelectorAll('[role="option"]');
+    items.forEach((item) => {
+      if (item.getAttribute('data-value') === value) item.classList.add('selected');
+      else item.classList.remove('selected');
+    });
+  }
+}
+
 // DOM Elements
 const captionEl = document.getElementById("caption");
 const aiEl = document.getElementById("aiResponse");
@@ -25,6 +132,11 @@ const vbApplyBtn = document.getElementById('vbApplyBtn');
 const vbStatus = document.getElementById('vbStatus');
 // Download history
 const downloadHistoryBtn = document.getElementById('downloadHistoryBtn');
+// Custom select elements for Gemini model
+const geminiModelSelect = document.getElementById('geminiModel');
+const geminiModelBtn = document.getElementById('geminiModelBtn');
+const geminiModelList = document.getElementById('geminiModelList');
+const geminiModelLabel = document.getElementById('geminiModelLabel');
 
 // State
 let currentQuestion = '';
@@ -57,6 +169,12 @@ function adjustScrollPadding() {
     codeAnswerEl.style.overflowY = 'auto';
     codeAnswerEl.style.overflowX = 'hidden';
   }
+
+  // Initialize custom Gemini model dropdown
+  setupCustomModelDropdown();
+
+  // Presentation Mode default ON: keep cursor static and suppress hover visuals
+  document.body.classList.add('presentation');
 
   // Wire Copy Code button
   if (copyCodeBtn) {

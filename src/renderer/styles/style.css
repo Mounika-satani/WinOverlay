@@ -732,3 +732,110 @@ button:hover {
 
 .status-chip .sep { opacity: 0.6; }
 /* Copied from original style.css at project root */
+
+/* --- Custom in-overlay dropdown (Gemini Model) --- */
+.custom-select {
+  position: relative;
+  display: block; /* take full row width */
+  width: 100%;
+}
+
+.custom-select-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 4px;
+  cursor: default; /* presentation mode keeps cursor default */
+}
+
+.custom-select-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  z-index: 2000; /* above panel content but within overlay */
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.custom-select-list li {
+  padding: 8px 10px;
+  border-radius: 4px;
+  color: #eee;
+}
+
+.custom-select-list li.selected {
+  background: rgba(74,144,226,0.25);
+  color: #fff;
+}
+
+/* In presentation mode, suppress hover visuals while remaining clickable */
+body.presentation .custom-select-list li:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+/* Presentation Mode: keep cursor static and suppress visual interaction cues */
+body.presentation, body.presentation * {
+  cursor: default !important;
+}
+
+body.presentation button,
+body.presentation a,
+body.presentation [role="button"],
+body.presentation input,
+body.presentation select,
+body.presentation textarea {
+  /* Lock cursor to default on interactive elements */
+  cursor: default !important;
+  /* Neutral base visuals */
+  transition: none !important;
+}
+
+/* Suppress hover/focus/active styling while keeping elements functional */
+body.presentation button:hover,
+body.presentation button:focus,
+body.presentation button:active,
+body.presentation a:hover,
+body.presentation a:focus,
+body.presentation a:active,
+body.presentation [role="button"]:hover,
+body.presentation [role="button"]:focus,
+body.presentation [role="button"]:active,
+body.presentation input:hover,
+body.presentation input:focus,
+body.presentation input:active,
+body.presentation select:hover,
+body.presentation select:focus,
+body.presentation select:active,
+body.presentation textarea:hover,
+body.presentation textarea:focus,
+body.presentation textarea:active {
+  outline: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  /* Keep background/border consistent (do not change on hover/active) */
+  background: inherit !important;
+  border-color: inherit !important;
+}
+
+/* Keep the tab buttons from visually changing on hover when presenting */
+body.presentation .tab:hover,
+body.presentation .tab.active {
+  background: rgba(255,255,255,0.08) !important;
+  color: #eee !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Allow the model dropdown to function normally (no pointer-events override) */

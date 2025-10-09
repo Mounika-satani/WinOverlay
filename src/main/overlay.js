@@ -25,6 +25,13 @@ function createOverlay() {
     },
   });
 
+  // Prevent this window from being captured by screen sharing/recording tools
+  try {
+    overlayWindow.setContentProtection(true);
+  } catch (e) {
+    console.warn('⚠️ Could not enable content protection', e);
+  }
+
   // Load the overlay HTML from src/renderer/pages
   const htmlPath = path.join(__dirname, "..", "renderer", "pages", "overlay.html");
   overlayWindow.loadFile(htmlPath);
