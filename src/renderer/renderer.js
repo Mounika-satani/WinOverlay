@@ -1,5 +1,6 @@
 // src/renderer/renderer.js
 const { ipcRenderer } = require("electron");
+const { clipboard } = require('electron');
 
 // No-op function to replace debug logging
 function debugLog() {}
@@ -16,11 +17,14 @@ const conversationHistoryEl = document.getElementById("conversationHistory");
 const askInput = document.getElementById("askInput");
 const askBtn = document.getElementById("askBtn");
 const codeAnswer = document.getElementById('codeAnswer');
+const copyCodeBtn = document.getElementById('copyCodeBtn');
 // VB-CABLE elements
 const vbToggle = document.getElementById('vbToggle'); // optional (no longer present in UI)
 const vbInstallBtn = document.getElementById('vbInstallBtn');
 const vbApplyBtn = document.getElementById('vbApplyBtn');
 const vbStatus = document.getElementById('vbStatus');
+// Download history
+const downloadHistoryBtn = document.getElementById('downloadHistoryBtn');
 
 // State
 let currentQuestion = '';
@@ -52,6 +56,35 @@ function adjustScrollPadding() {
     codeAnswerEl.style.maxHeight = available + 'px';
     codeAnswerEl.style.overflowY = 'auto';
     codeAnswerEl.style.overflowX = 'hidden';
+  }
+
+  // Wire Copy Code button
+  if (copyCodeBtn) {
+    copyCodeBtn.addEventListener('click', async () => {
+      try {
+        const text = (codeAnswer && codeAnswer.textContent) ? codeAnswer.textContent : '';
+        if (!text.trim() || text.includes('Code view will appear here')) {
+          statusEl.innerText = 'No code to copy yet.';
+          return;
+        }
+        if (clipboard && typeof clipboard.writeText === 'function') {
+          clipboard.writeText(text);
+        } else if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Fallback: temporary textarea
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        statusEl.innerText = 'Code copied to clipboard.';
+      } catch (e) {
+        statusEl.innerText = 'Failed to copy code: ' + (e.message || 'Unknown error');
+      }
+    });
   }
 }
 
@@ -458,6 +491,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Check VB-CABLE installation status
   initVbCableSection();
+
+  // Wire Download History button
+  if (downloadHistoryBtn) {
+    downloadHistoryBtn.addEventListener('click', async () => {
+      try {
+        const transcript = collectConversationTranscript();
+        if (!transcript.trim()) {
+          statusEl.innerText = 'No conversation to download yet.';
+          return;
+        }
+        const suggested = `interview-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+        const res = await ipcRenderer.invoke('download-history', { content: transcript, suggestedName: suggested });
+        if (res && res.success) {
+          statusEl.innerText = 'Transcript saved.';
+        } else {
+          statusEl.innerText = 'Save cancelled or failed.';
+        }
+      } catch (e) {
+        statusEl.innerText = 'Error saving transcript: ' + (e.message || 'Unknown error');
+      }
+    });
+  }
 });
 
 // Handle Enter key in ask input
@@ -551,5 +606,19 @@ async function initVbCableSection() {
   // Removed Open Playback / Open Recording / Revert controls (no longer in UI)
 
   // No toggle now; guidance is provided via buttons and status messages.
+}
+
+// Collect conversation history as plain text transcript
+function collectConversationTranscript() {
+  const historyEl = document.getElementById('conversationHistory');
+  if (!historyEl) return '';
+  const lines = [];
+  for (const el of historyEl.children) {
+    const cls = el.className || '';
+    const role = cls.includes('user') ? 'User' : cls.includes('assistant') ? 'Assistant' : 'Message';
+    const text = (el.textContent || '').trim();
+    if (text) lines.push(`${role}: ${text}`);
+  }
+  return lines.join('\n\n');
 }
 // src/renderer/renderer.js

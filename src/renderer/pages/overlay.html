@@ -22,7 +22,7 @@
 
   <!-- Floating Action Button (Stop) -->
   <div class="fab-container">
-    <button id="stopBtn" class="fab-stop" title="Stop Transcription" aria-label="Stop">⏹</button>
+    <button id="stopBtn" class="fab-stop" title="Stop Transcription" aria-label="Stop">⏹stop</button>
   </div>
   
 
@@ -53,6 +53,11 @@
       <div id="conversation" class="conversation-container">
         <div class="conversation-header">
           <span>Interview Conversation</span>
+          <button id="downloadHistoryBtn" class="small-btn" title="Download full transcript" aria-label="Download transcript" style="margin-left:auto;">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <path fill="currentColor" d="M5 20h14a1 1 0 0 0 1-1v-3h-2v2H6v-2H4v3a1 1 0 0 0 1 1zm7-3l5-5h-3V4h-4v8H7l5 5z"/>
+            </svg>
+          </button>
         </div>
         <div id="conversationHistory" class="conversation-history"></div>
       </div>
@@ -60,7 +65,12 @@
 
     <!-- CODE PANEL -->
     <div id="panel-code" class="tab-panel">
-      <div class="panel" style="padding:0;">
+      <div class="panel" style="padding:0; position:relative;">
+        <button id="copyCodeBtn" class="small-btn" title="Copy code" aria-label="Copy code" style="position:absolute; top:8px; right:8px; z-index:2; display:inline-flex; align-items:center; gap:6px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+        </button>
         <pre id="codeAnswer" style="margin:0; padding:10px; background: rgba(0,0,0,0.25);
           font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
         ">🤖 Code view will appear here…</pre>

@@ -1,8 +1,9 @@
 // src/main/main.js
-const { app, ipcMain, BrowserWindow, shell } = require("electron");
+const { app, ipcMain, BrowserWindow, shell, dialog } = require("electron");
 const { createOverlay } = require("./overlay");
 const transcription = require("./transcription");
 const { exec } = require('child_process');
+const fs = require('fs');
 
 let overlayWindow;
 
@@ -61,6 +62,30 @@ ipcMain.handle('open-sound-recording', async () => {
     return true;
   } catch (e) {
     return false;
+  }
+});
+
+// IPC: download/save conversation history to a text file
+ipcMain.handle('download-history', async (event, args) => {
+  try {
+    const content = (args && args.content) || '';
+    const suggestedName = (args && args.suggestedName) || 'transcript.txt';
+    const win = overlayWindow instanceof BrowserWindow ? overlayWindow : null;
+    const result = await dialog.showSaveDialog(win, {
+      title: 'Save Transcript',
+      defaultPath: suggestedName,
+      filters: [
+        { name: 'Text Files', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    if (result.canceled || !result.filePath) {
+      return { success: false, canceled: true };
+    }
+    await fs.promises.writeFile(result.filePath, content, 'utf8');
+    return { success: true, path: result.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
   }
 });
 
