@@ -20,8 +20,8 @@
     "electron-rebuild": "^3.2.9"
   },
   "build": {
-    "appId": "com.mounika.winoverlay",
-    "productName": "WinOverlay",
+    "appId": "com.weiteredge.prowerra",
+    "productName": "Prowerra",
     "forceCodeSigning": false,
     "files": [
       "**/*",
