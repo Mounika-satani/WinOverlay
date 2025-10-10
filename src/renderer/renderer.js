@@ -144,6 +144,9 @@ let currentAnswer = '';
 let isProcessing = false;
 let isStarted = false;
 let lastAskedIsCode = false;
+let pauseLiveWhileTyping = true; // settings toggle
+let lastTypingAt = 0; // timestamp of last keystroke in Ask input
+let lastHeardText = ''; // latest voice transcript (even when UI updates are paused)
 
 // Adjust bottom padding to avoid overlap with fixed input panel
 function adjustScrollPadding() {
@@ -235,14 +238,55 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tabCode) tabCode.addEventListener('click', () => setActiveTab('code'));
   if (tabHistory) tabHistory.addEventListener('click', () => setActiveTab('history'));
   if (tabSettings) tabSettings.addEventListener('click', () => setActiveTab('settings'));
+
+  // Fallback: event delegation to ensure tab clicks always work
+  const tabsBar = document.querySelector('.tabs');
+  if (tabsBar) {
+    tabsBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('button.tab');
+      if (!btn) return;
+      switch (btn.id) {
+        case 'tabLive':
+          setActiveTab('live');
+          break;
+        case 'tabCode':
+          setActiveTab('code');
+          break;
+        case 'tabHistory':
+          setActiveTab('history');
+          break;
+        case 'tabSettings':
+          setActiveTab('settings');
+          break;
+      }
+    });
+  }
 });
+
+// ...
+
+// Add event listener to askInput for key and input events
+askInput.addEventListener('keydown', () => {
+  lastTypingAt = Date.now();
+});
+askInput.addEventListener('input', () => {
+  lastTypingAt = Date.now();
+});
+
+// ...
 
 ipcRenderer.on("transcription", (event, text) => {
   if (!text.trim()) return;
-  
-  currentQuestion = text;
-  captionEl.innerText = text;
-  statusEl.innerText = "Status: listening...";
+  // Do not override during a manual request; and briefly pause after user types
+  const recentlyTyped = (Date.now() - lastTypingAt) < 1500; // 1.5s window
+  // Always record latest heard text for intent/history
+  lastHeardText = text;
+  if (!(pauseLiveWhileTyping && (isProcessing || recentlyTyped))) {
+    // Only update the visible caption and bind as current question when not paused
+    currentQuestion = text;
+    captionEl.innerText = text;
+    statusEl.innerText = "Status: listening...";
+  }
   
   // If we were showing a previous answer, add it to history
   if (currentAnswer) {
@@ -276,9 +320,12 @@ ipcRenderer.on("mode-change", (event, mode) => {
 
 ipcRenderer.on("gemini-response", (event, text) => {
   if (!text.trim()) return;
-  
+  // If a manual question is in progress, ignore live updates to prevent overwriting
+  if (pauseLiveWhileTyping && isProcessing) return;
+
   currentAnswer = text;
-  const intent = lastAskedIsCode || isCodeIntent(currentQuestion);
+  const userContext = currentQuestion || lastHeardText || '';
+  const intent = lastAskedIsCode || isCodeIntent(userContext);
   const parts = splitExplanationAndCode(text);
   let code = parts.code;
   let explanation = parts.explanation;
@@ -291,29 +338,34 @@ ipcRenderer.on("gemini-response", (event, text) => {
   if (code) {
     if (codeAnswer) codeAnswer.textContent = code;
     if (aiEl) aiEl.textContent = explanation || "Code answer available in Code tab";
-    setActiveTab('code');
+    // Respect user's selection of Settings tab; don't auto-switch away from it
+    const settingsActive = document.getElementById('tabSettings') && document.getElementById('tabSettings').classList.contains('active');
+    if (!settingsActive) setActiveTab('code');
   } else {
     if (aiEl) aiEl.textContent = text;
-    if (codeAnswer) codeAnswer.textContent = "";
-    setActiveTab('live');
+    // Do NOT clear existing code when a non-code message arrives
+    // Only switch to Live if the user is not currently viewing the Code tab
+    const tabCodeBtn = document.getElementById('tabCode');
+    const codeTabActive = tabCodeBtn && tabCodeBtn.classList.contains('active');
+    const settingsActive = document.getElementById('tabSettings') && document.getElementById('tabSettings').classList.contains('active');
+    if (!codeTabActive && !settingsActive) setActiveTab('live');
   }
   statusEl.innerText = "Status: AI updated";
   // Reset flag after handling
   lastAskedIsCode = false;
   
-  // If we have both question and answer, add them to history
-  if (currentQuestion) {
-    addToHistory('user', currentQuestion);
-    addToHistory('assistant', currentAnswer);
-    currentQuestion = '';
-    currentAnswer = '';
-  }
+  // If we have a user context, add Q/A to history; otherwise, at least add the answer
+  const q = userContext.trim();
+  if (q) addToHistory('user', q);
+  addToHistory('assistant', currentAnswer);
+  currentQuestion = '';
+  currentAnswer = '';
 });
 
 ipcRenderer.on("qa-response", (event, text) => {
   if (text) {
-    addToHistory('assistant', text);
-    const intent = lastAskedIsCode || isCodeIntent(currentQuestion);
+    const userContext = currentQuestion || lastHeardText || '';
+    const intent = lastAskedIsCode || isCodeIntent(userContext);
     const parts = splitExplanationAndCode(text);
     let code = parts.code;
     let explanation = parts.explanation;
@@ -324,12 +376,20 @@ ipcRenderer.on("qa-response", (event, text) => {
     if (code) {
       if (codeAnswer) codeAnswer.textContent = code;
       if (aiEl) aiEl.textContent = explanation || "Code answer available in Code tab";
-      setActiveTab('code');
+      const settingsActive = document.getElementById('tabSettings') && document.getElementById('tabSettings').classList.contains('active');
+      if (!settingsActive) setActiveTab('code');
     } else {
       if (aiEl) aiEl.textContent = text;
-      if (codeAnswer) codeAnswer.textContent = "";
-      setActiveTab('live');
+      // Preserve existing code view and avoid switching away if user is on Code tab
+      const tabCodeBtn = document.getElementById('tabCode');
+      const codeTabActive = tabCodeBtn && tabCodeBtn.classList.contains('active');
+      const settingsActive = document.getElementById('tabSettings') && document.getElementById('tabSettings').classList.contains('active');
+      if (!codeTabActive && !settingsActive) setActiveTab('live');
     }
+    // Update history (include the user side if available)
+    const q = userContext.trim();
+    if (q) addToHistory('user', q);
+    addToHistory('assistant', text);
     isProcessing = false;
     lastAskedIsCode = false;
   }
@@ -639,6 +699,13 @@ askInput.addEventListener('keypress', (e) => {
     askBtn.click();
   }
 });
+
+// Track recent typing activity to avoid over-blocking live updates
+function markTypingActivity() {
+  lastTypingAt = Date.now();
+}
+askInput.addEventListener('keydown', markTypingActivity);
+askInput.addEventListener('input', markTypingActivity);
 
 // Manual Q&A send
 askBtn.addEventListener("click", () => {
