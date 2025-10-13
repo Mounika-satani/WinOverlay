@@ -58,7 +58,8 @@ If you don’t have VB-CABLE set up:
 2. In Windows Sound settings, configure as follows (typical setup):
    - Playback: set `CABLE Input (VB-Audio Virtual Cable)` as Default device.
    - Recording: set your physical mic as Default.
-   - Recording > Properties > Listen: Uncheck "Listen to this device" and set playback to `CABLE Input`.
+   - Recording > Microphone (click) > Properties > Listen: Uncheck "Listen to this device" and set playback to `CABLE Input`.
+   - Recording > CABLE Output (click) > Properties > Listen: Check "Listen to this device" and set `Playback through this device` to your speakers/headphones (e.g., Speaker/HP (Realtek High Definition Audio)).
 3. Relaunch the app and press `Start` again.
 
 If you want to use another device, update the `deviceName` passed in `src/renderer/renderer.js` where `start-transcription` is invoked.
