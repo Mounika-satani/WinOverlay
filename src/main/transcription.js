@@ -8,7 +8,8 @@ let overlayWindow;
 
 let transcriptBuffer = "";
 let bufferTimer = null;
-const flushIntervalMs = 2500;
+// Lower flush interval to improve perceived responsiveness of live captions
+const flushIntervalMs = 800;
 
 let currentGeminiKey = null;
 let currentGeminiModel = "gemini-2.5-flash";
@@ -197,7 +198,8 @@ async function callGemini(history) {
     contents: history,
     generationConfig: {
       thinkingConfig: { thinkingBudget: 0 },
-      maxOutputTokens: 1000, // Increased for code responses
+      // Reduce maxOutputTokens for faster responses; long code snippets still supported via follow-ups
+      maxOutputTokens: 400,
       temperature: 0.2, // Lower for more focused responses
       topP: 0.8,
       topK: 40,

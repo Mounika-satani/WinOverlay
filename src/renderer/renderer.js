@@ -278,7 +278,7 @@ askInput.addEventListener('input', () => {
 ipcRenderer.on("transcription", (event, text) => {
   if (!text.trim()) return;
   // Do not override during a manual request; and briefly pause after user types
-  const recentlyTyped = (Date.now() - lastTypingAt) < 1500; // 1.5s window
+  const recentlyTyped = (Date.now() - lastTypingAt) < 700; // shorter window for snappier updates
   // Always record latest heard text for intent/history
   lastHeardText = text;
   if (!(pauseLiveWhileTyping && (isProcessing || recentlyTyped))) {
@@ -693,9 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Handle Enter key in ask input
-askInput.addEventListener('keypress', (e) => {
+// Handle Enter key in ask input (use keydown for snappier response and to avoid keypress quirks)
+askInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
+    e.preventDefault();
     askBtn.click();
   }
 });
@@ -731,25 +732,40 @@ askBtn.addEventListener("click", () => {
 
   isProcessing = true;
   statusEl.innerText = "Asking Gemini...";
+  if (askBtn) askBtn.disabled = true;
+  // Immediately reflect the user's question and a thinking placeholder for faster perceived response
+  currentQuestion = question;
+  if (captionEl) captionEl.innerText = question;
+  if (aiEl) aiEl.textContent = 'Thinking…';
+  // If the user likely asked for code, prime the Code tab with a placeholder
+  const wantsCode = isCodeIntent(question);
+  lastAskedIsCode = wantsCode;
+  if (wantsCode && codeAnswer) {
+    codeAnswer.textContent = '// Generating code…';
+  }
+  // Reset typing marker so live updates aren't paused too long after sending
+  lastTypingAt = 0;
   
   // Add user question to history immediately
   addToHistory('user', question);
   
-  // Mark if the user explicitly requested code
-  lastAskedIsCode = isCodeIntent(question);
-
+  // Mark if the user explicitly requested code (already computed)
+  
   ipcRenderer.invoke("ask-gemini", question).then(res => {
     if (!res.success) {
       statusEl.innerText = "Error: " + res.error;
       isProcessing = false;
+      if (askBtn) askBtn.disabled = false;
       return;
     }
     statusEl.innerText = "AI answered.";
     askInput.value = "";
     askInput.focus();
+    if (askBtn) askBtn.disabled = false;
   }).catch(err => {
     statusEl.innerText = "Error: " + (err.message || 'Unknown error');
     isProcessing = false;
+    if (askBtn) askBtn.disabled = false;
   });
 });
 // VB-CABLE helpers
